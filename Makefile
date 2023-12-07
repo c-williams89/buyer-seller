@@ -24,7 +24,7 @@ SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 # executable
-BIN := minorly
+BIN := buyer
 CHECK := $(BIN)_check
 
 TESTS := $(wildcard $(TEST_DIR)/*.c)
