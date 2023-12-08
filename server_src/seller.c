@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <stdint.h>
 
 #include "server.h"
 #include "shared.h"
@@ -33,14 +34,24 @@ int main(void) {
                 errno = 0;
                 goto EXIT;
         }
-
-        if (-1 == accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len)) {
+        uint32_t sockfd;
+        sockfd = accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len);
+        if (-1 == sockfd) {
+        // if (-1 == accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len)) {
                 perror("accept on server");
                 errno = 0;
                 goto EXIT;
-        } else {
-                printf("Connection created with client\n");
         }
+        uint8_t byte_array[5] = { 0 };
+        recv(sockfd, byte_array, 5, 0);
+        // Should be: 4 3600
+        for (int i = 0; i < 5; ++i) {
+                printf("%02x ", byte_array[i]);
+        }
+        puts("");
+        printf("ACCT: %d\n", byte_array[0]);
+        printf("Transaction: %d\n", *(int32_t *)(byte_array + 1));
+        printf("Connection created with client\n");
 EXIT:
         // close(server_sock);   
         return 1;        

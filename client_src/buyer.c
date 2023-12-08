@@ -70,18 +70,14 @@ int main (int argc, char *argv[]) {
                 uint8_t byte_array[5] = { 0 };
                 char *arg = strtok(cpy, " ");
                 byte_array[0] = (uint8_t)*arg - '0';
-                // printf("index 0: %d\n", byte_array[0]);
-                // printf("%s\n", cpy);
                 arg = strtok(NULL, "\n");
                 long new_val = strtol(arg, NULL, 10);
                 int32_t *num = (byte_array + 1);
                 *num = (int32_t)new_val;
-                printf("%d\n", *num);
-                printf("%s\n", arg);
+                send(client_sock, byte_array, 5, 0);
                 for (int i = 0; i < 5; ++i) {
                         printf("%02x ", byte_array[i]);
                 }
-                // send()
                 puts("");
                 break;
         }
