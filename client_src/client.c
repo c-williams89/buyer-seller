@@ -8,6 +8,7 @@
 #include "shared.h"
 
 int client_create_socket() {
+
         struct sockaddr_un client_sockaddr;
         int client_sock = -1;
 
@@ -23,5 +24,6 @@ int client_create_socket() {
         strncpy(client_sockaddr.sun_path, CLIENT_PATH, strlen(CLIENT_PATH));
 
 EXIT:
+
         return client_sock;
 }
