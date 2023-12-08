@@ -7,8 +7,31 @@
 
 #include "client.h"
 #include "shared.h"
+#include "io_helper.h"
 
 int main (int argc, char *argv[]) {
+        
+        if (1 == argc) {
+                fprintf(stderr, "client: Missing file argument\n");
+                goto EXIT;
+        }
+        if (argc > 2) {
+                fprintf(stderr, "client: Too many arguments\n");
+                goto EXIT;
+        }
+        FILE *fp = fopen(argv[1], "r");
+        if (!fp) {
+                perror("client");
+                errno = 0;
+                goto EXIT;
+        }
+
+        if (!validate_file(fp)) {
+                goto EXIT;
+        }
+
+        
+        
         printf("Client is Running\n");
         
         struct sockaddr_un server_sockaddr;

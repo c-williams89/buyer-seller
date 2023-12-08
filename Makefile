@@ -64,7 +64,7 @@ profile: $(BIN)
 	@mkdir $(DATA_DIR)
 
 clean: 
-	@rm -rf $(CLIENT) $(SERVER) $(C_OBJ_DIR) $(S_OBJ_DIR) $(CHECK) $(DATA_DIR) gmon.out server_unix_domain_socket
+	@rm -rf $(CLIENT) $(SERVER) $(C_OBJ_DIR) $(S_OBJ_DIR) $(CHECK) gmon.out server_unix_domain_socket
 	
 indent:
 	indent -linux $(SRC_DIR)/*.c
