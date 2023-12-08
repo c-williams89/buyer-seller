@@ -9,6 +9,8 @@
 #include "shared.h"
 
 int main (int argc, char *argv[]) {
+        printf("Client is Running\n");
+        
         struct sockaddr_un server_sockaddr;
         // struct sockaddr_un client_sockaddr;
 	char *server_socket_path = "server_unix_domain_socket";
@@ -29,5 +31,6 @@ int main (int argc, char *argv[]) {
                 goto EXIT;
         }
 EXIT:
+        
         return 1;
 }
