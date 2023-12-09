@@ -34,23 +34,32 @@ int main(void) {
                 errno = 0;
                 goto EXIT;
         }
+        // Consider getting the number of entries and looping over that amount
         uint32_t sockfd;
         sockfd = accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len);
+
         if (-1 == sockfd) {
-        // if (-1 == accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len)) {
                 perror("accept on server");
                 errno = 0;
                 goto EXIT;
         }
         uint8_t byte_array[5] = { 0 };
-        recv(sockfd, byte_array, 5, 0);
-        // Should be: 4 3600
-        for (int i = 0; i < 5; ++i) {
-                printf("%02x ", byte_array[i]);
+        // char *end_of_trans = "23"; 
+        
+        size_t received = recv(sockfd, byte_array, 5, 0);
+        while ((received = recv(sockfd, byte_array, 5, 0)) > 0) {
+        // while (byte_array[0] != (uint8_t)*EOT) {
+                // printf("%d\n", sockfd);
+                if (-1 != recv(sockfd, byte_array, 5, 0)) {
+                        printf("ACCT: %d\n", byte_array[0]);
+                        printf("Transaction: %d\n\n", *(int32_t *)(byte_array + 1));
+                } else {
+                        printf("No message\n");
+                }
         }
-        puts("");
-        printf("ACCT: %d\n", byte_array[0]);
-        printf("Transaction: %d\n", *(int32_t *)(byte_array + 1));
+        // recv(sockfd, byte_array, 5, 0);
+        // printf("ACCT: %d\n", byte_array[0]);
+        // printf("Transaction: %d\n", *(int32_t *)(byte_array + 1));
         printf("Connection created with client\n");
 EXIT:
         // close(server_sock);   

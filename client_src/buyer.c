@@ -6,6 +6,7 @@
 #include <sys/un.h>
 #include <sys/socket.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include "client.h"
 #include "shared.h"
@@ -64,10 +65,10 @@ int main (int argc, char *argv[]) {
 
         char *buff = NULL;
         size_t buff_len = 0;
-        
+        // currently sending 255 messages
+        uint8_t byte_array[5] = { 0 };
         while (-1 != getline(&buff, &len, fp)) {
                 char *cpy = buff;
-                uint8_t byte_array[5] = { 0 };
                 char *arg = strtok(cpy, " ");
                 byte_array[0] = (uint8_t)*arg - '0';
                 arg = strtok(NULL, "\n");
@@ -79,9 +80,15 @@ int main (int argc, char *argv[]) {
                         printf("%02x ", byte_array[i]);
                 }
                 puts("");
-                break;
         }
+        // byte_array[0] = (uint8_t)*EOT;
+        // send(client_sock, byte_array, 5, 0);
         free(buff);
+
+        printf("before close: %d\n", client_sock);
+
+        close(client_sock);
+        printf("after close: %d\n", client_sock);
 EXIT:
         
         return 1;
