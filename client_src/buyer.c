@@ -1,14 +1,46 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/un.h>
 #include <sys/socket.h>
+#include <stdint.h>
+#include <unistd.h>
 
 #include "client.h"
 #include "shared.h"
+#include "io_helper.h"
 
 int main (int argc, char *argv[]) {
+        // char *test = "4";
+        // long val = strtol(test, NULL, 10);
+        // printf("%b\n", val);
+
+
+        if (1 == argc) {
+                fprintf(stderr, "client: Missing file argument\n");
+                goto EXIT;
+        }
+
+        if (argc > 2) {
+                fprintf(stderr, "client: Too many arguments\n");
+                goto EXIT;
+        }
+
+        FILE *fp = fopen(argv[1], "r");
+        if (!fp) {
+                perror("client");
+                errno = 0;
+                goto EXIT;
+        }
+
+        if (!validate_file(fp)) {
+                goto EXIT;
+        }
+
+        
+        
         printf("Client is Running\n");
         
         struct sockaddr_un server_sockaddr;
@@ -30,6 +62,33 @@ int main (int argc, char *argv[]) {
                 errno = 0;
                 goto EXIT;
         }
+
+        char *buff = NULL;
+        size_t buff_len = 0;
+        // currently sending 255 messages
+        uint8_t byte_array[5] = { 0 };
+        while (-1 != getline(&buff, &len, fp)) {
+                char *cpy = buff;
+                char *arg = strtok(cpy, " ");
+                byte_array[0] = (uint8_t)*arg - '0';
+                arg = strtok(NULL, "\n");
+                long new_val = strtol(arg, NULL, 10);
+                int32_t *num = (byte_array + 1);
+                *num = (int32_t)new_val;
+                send(client_sock, byte_array, 5, 0);
+                for (int i = 0; i < 5; ++i) {
+                        printf("%02x ", byte_array[i]);
+                }
+                puts("");
+        }
+        // byte_array[0] = (uint8_t)*EOT;
+        // send(client_sock, byte_array, 5, 0);
+        free(buff);
+
+        printf("before close: %d\n", client_sock);
+
+        close(client_sock);
+        printf("after close: %d\n", client_sock);
 EXIT:
         
         return 1;
