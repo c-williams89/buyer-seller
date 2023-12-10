@@ -91,7 +91,6 @@ int main (int argc, char *argv[]) {
         }
         for (int i = 0; i < NUM_ACCTS; ++i) {
                 printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
-                // printf("%d\t%d  %d  %d\n",i, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
         
         free(buff);

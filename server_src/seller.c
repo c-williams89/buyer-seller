@@ -83,29 +83,28 @@ int main(void) {
                 errno = 0;
                 goto EXIT;
         }
-        // printf("After listen\n");
 
-        while (num_connected < 9) {
+        while (num_connected < NUM_MAX_CLIENTS) {
                 uint32_t sockfd;
                 sockfd = accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len);
-                // printf("After accept\n");
                 if (-1 == sockfd) {
                         perror("accept on server");
                         errno = 0;
-                        goto EXIT;
+                        continue;
+                        // goto EXIT;
                 }
                 pkg_t pkg;
                 pkg.client_accounts = &client_accounts;
                 pkg.sockfd = sockfd;
 
-                pthread_create(thread_list + num_connected++, NULL, thread_func, (void *)&pkg);
+                pthread_create(thread_list + num_connected, NULL, thread_func, (void *)&pkg);
+                num_connected ++;
         }
 
-        for (int i = 0; i < 2; ++i) {
+        for (int i = 0; i < NUM_MAX_CLIENTS; ++i) {
                 pthread_join(thread_list[i], NULL);
         }
-        pthread_join(thread_list[0], NULL);
-        // printf("Connection created with client\n");
+        // pthread_join(thread_list[0], NULL);
         for (int i = 0; i < NUM_ACCTS; ++i) {
                 printf("network\t%d\t%d  %d  %d\n", i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
