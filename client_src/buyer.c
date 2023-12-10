@@ -38,11 +38,10 @@ int main (int argc, char *argv[]) {
                 goto EXIT;
         }
 
-        account_t *client_accounts[NUM_ACCTS];
+        account_t client_accounts[NUM_ACCTS] = { 0 };
         for (int i = 0; i < NUM_ACCTS; ++i) {
-                account_t *account;
-                memset(&account, 0, sizeof(account));
-                client_accounts[i] = &account;
+                account_t account = {0, 0, 0};
+                client_accounts[i] = account;
         }
         
         printf("Client is Running\n");
@@ -71,10 +70,8 @@ int main (int argc, char *argv[]) {
         size_t buff_len = 0;
         uint8_t byte_array[5] = { 0 };
         while (-1 != getline(&buff, &buff_len, fp)) {
-                printf("Beginning of while\n");
                 char *cpy = buff;
                 char *arg = strtok(cpy, " ");
-                // int acct_num = strtol(arg, NULL, 10);
                 uint8_t acct_num = (uint8_t)*arg - '0';
                 // byte_array[0] = (uint8_t)*arg - '0';
                 byte_array[0] = acct_num;
@@ -82,37 +79,23 @@ int main (int argc, char *argv[]) {
                 long new_val = strtol(arg, NULL, 10);
                 int32_t *num = (byte_array + 1);
                 *num = (int32_t)new_val;
-                /*
-                Before send, vals are:
-                arg = 36, first iter 9890
-                cpy = 4
-                new_val = 36 addr deb0
-                buff = 4, same address as cpy
-                */
-                // printf("%d\n", acct_num);
-                // printf("%d\n", new_val);
-                // if (client_accounts[acct_num]) {
-                printf("Before add\n");
-                account_add_order(client_accounts[acct_num], acct_num, new_val);
-                printf("Added to account\n");
-
-                // }
-                printf("Before send\n");
-                send(client_sock, byte_array, 5, 0);
-                printf("After send\n");
-        }
-        for (int i = 0; i < NUM_ACCTS; ++i) {
-                if (client_accounts[i]) {
-                        account_print(client_accounts[i], i);
-                        // printf("%d\n", i);
+                if (0 == new_val) {
+                        continue;
+                } else if (new_val > 0) {
+                        
                 }
+                client_accounts[acct_num - 1].amt_owed += new_val;
+
+                send(client_sock, byte_array, 5, 0);
         }
+        
+        for (int i = 0; i < NUM_ACCTS; ++i) {
+                printf("%d\t%d\n", i, client_accounts[i].amt_owed);
+        }
+        
         free(buff);
 
-        // printf("before close: %d\n", client_sock);
-
         close(client_sock);
-        // printf("after close: %d\n", client_sock);
         fclose(fp);
 EXIT:
         return 1;

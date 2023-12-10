@@ -14,15 +14,16 @@ typedef struct account_t {
         uint32_t num_payments;
 } account_t;
 
+account_t * account_create(void) {
+        account_t *account = { 0 };
+        return account;
+}
+
 void account_add_order(account_t *acct, uint8_t acct_num, int amt) {
-        // if (!acct || !*acct) {
-        //         printf("NULL");
-        //         return;
-        // }
         if (!acct) {
                 printf("NULL");
         }
-        printf("adding to account\n");
+
         acct->amt_owed += amt;
 }
 
