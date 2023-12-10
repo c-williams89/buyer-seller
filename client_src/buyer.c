@@ -11,12 +11,11 @@
 #include "client.h"
 #include "shared.h"
 #include "io_helper.h"
+#include "account.h"
+
+#define NUM_ACCTS 5
 
 int main (int argc, char *argv[]) {
-        // char *test = "4";
-        // long val = strtol(test, NULL, 10);
-        // printf("%b\n", val);
-
 
         if (1 == argc) {
                 fprintf(stderr, "client: Missing file argument\n");
@@ -39,7 +38,11 @@ int main (int argc, char *argv[]) {
                 goto EXIT;
         }
 
-        
+        account_t *client_accounts[NUM_ACCTS];
+        for (int i = 0; i < NUM_ACCTS; ++i) {
+                account_t *account;
+                client_accounts[i] = account;
+        }
         
         printf("Client is Running\n");
         
@@ -65,31 +68,34 @@ int main (int argc, char *argv[]) {
 
         char *buff = NULL;
         size_t buff_len = 0;
-        // currently sending 255 messages
         uint8_t byte_array[5] = { 0 };
         while (-1 != getline(&buff, &len, fp)) {
                 char *cpy = buff;
                 char *arg = strtok(cpy, " ");
-                byte_array[0] = (uint8_t)*arg - '0';
+                uint8_t acct_num = (uint8_t)*arg - '0';
+                // byte_array[0] = (uint8_t)*arg - '0';
+                byte_array[0] = acct_num;
                 arg = strtok(NULL, "\n");
                 long new_val = strtol(arg, NULL, 10);
                 int32_t *num = (byte_array + 1);
                 *num = (int32_t)new_val;
+                /*
+                Before send, vals are:
+                arg = 36, first iter 9890
+                cpy = 4
+                new_val = 36 addr deb0
+                buff = 4, same address as cpy
+                */
+                account_add_order(client_accounts[acct_num], acct_num, new_val);
                 send(client_sock, byte_array, 5, 0);
-                for (int i = 0; i < 5; ++i) {
-                        printf("%02x ", byte_array[i]);
-                }
-                puts("");
         }
-        // byte_array[0] = (uint8_t)*EOT;
-        // send(client_sock, byte_array, 5, 0);
         free(buff);
 
-        printf("before close: %d\n", client_sock);
+        // printf("before close: %d\n", client_sock);
 
         close(client_sock);
-        printf("after close: %d\n", client_sock);
+        // printf("after close: %d\n", client_sock);
+        fclose(fp);
 EXIT:
-        
         return 1;
 }

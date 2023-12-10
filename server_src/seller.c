@@ -49,7 +49,6 @@ int main(void) {
         size_t received = recv(sockfd, byte_array, 5, 0);
         while ((received = recv(sockfd, byte_array, 5, 0)) > 0) {
         // while (byte_array[0] != (uint8_t)*EOT) {
-                // printf("%d\n", sockfd);
                 if (-1 != recv(sockfd, byte_array, 5, 0)) {
                         printf("ACCT: %d\n", byte_array[0]);
                         printf("Transaction: %d\n\n", *(int32_t *)(byte_array + 1));
