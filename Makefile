@@ -35,6 +35,7 @@ CLIENT_OBJS := $(patsubst $(CLIENT_DIR)/%.c, $(C_OBJ_DIR)/%.o, $(CLIENT_SRCS))
 SERVER_SRCS := $(wildcard $(SERVER_DIR)/*.c)
 SERVER_OBJS := $(patsubst $(SERVER_DIR)/%.c, $(S_OBJ_DIR)/%.o, $(SERVER_SRCS))
 
+LIB := $(wildcard $(LIB_DIR)/*.a)
 # executable
 BIN := buyer
 CLIENT := client
@@ -73,10 +74,10 @@ indent:
 	@rm $(HDR_DIR)/*.h~
 
 $(CLIENT): $(CLIENT_OBJS)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ $(LIB)
 
 $(SERVER): $(SERVER_OBJS)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $(CFLAGS) $^ -o $@ $(LIB)
 
 $(C_OBJ_DIR):
 	@mkdir -p $@
