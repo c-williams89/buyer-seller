@@ -41,7 +41,8 @@ int main (int argc, char *argv[]) {
         account_t *client_accounts[NUM_ACCTS];
         for (int i = 0; i < NUM_ACCTS; ++i) {
                 account_t *account;
-                client_accounts[i] = account;
+                memset(&account, 0, sizeof(account));
+                client_accounts[i] = &account;
         }
         
         printf("Client is Running\n");
@@ -69,9 +70,11 @@ int main (int argc, char *argv[]) {
         char *buff = NULL;
         size_t buff_len = 0;
         uint8_t byte_array[5] = { 0 };
-        while (-1 != getline(&buff, &len, fp)) {
+        while (-1 != getline(&buff, &buff_len, fp)) {
+                printf("Beginning of while\n");
                 char *cpy = buff;
                 char *arg = strtok(cpy, " ");
+                // int acct_num = strtol(arg, NULL, 10);
                 uint8_t acct_num = (uint8_t)*arg - '0';
                 // byte_array[0] = (uint8_t)*arg - '0';
                 byte_array[0] = acct_num;
@@ -86,8 +89,23 @@ int main (int argc, char *argv[]) {
                 new_val = 36 addr deb0
                 buff = 4, same address as cpy
                 */
+                // printf("%d\n", acct_num);
+                // printf("%d\n", new_val);
+                // if (client_accounts[acct_num]) {
+                printf("Before add\n");
                 account_add_order(client_accounts[acct_num], acct_num, new_val);
+                printf("Added to account\n");
+
+                // }
+                printf("Before send\n");
                 send(client_sock, byte_array, 5, 0);
+                printf("After send\n");
+        }
+        for (int i = 0; i < NUM_ACCTS; ++i) {
+                if (client_accounts[i]) {
+                        account_print(client_accounts[i], i);
+                        // printf("%d\n", i);
+                }
         }
         free(buff);
 
