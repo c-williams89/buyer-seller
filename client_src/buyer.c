@@ -58,7 +58,7 @@ int main (int argc, char *argv[]) {
         server_sockaddr.sun_family = AF_UNIX;
         int len = sizeof(server_sockaddr);
         strncpy(server_sockaddr.sun_path, server_socket_path, strlen(server_socket_path));
-        printf("%s\n", server_sockaddr.sun_path);
+        // printf("%s\n", server_sockaddr.sun_path);
 
         if (-1 == connect(client_sock, (struct sockaddr *) &server_sockaddr, len)) {
                 perror("client connection");
@@ -90,7 +90,7 @@ int main (int argc, char *argv[]) {
 
                 send(client_sock, byte_array, 5, 0);
         }
-        
+        printf("Everything send\n");
         for (int i = 0; i < NUM_ACCTS; ++i) {
                 printf("%d\t%d  %d  %d\n",i, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
