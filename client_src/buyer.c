@@ -82,7 +82,9 @@ int main (int argc, char *argv[]) {
                 if (0 == new_val) {
                         continue;
                 } else if (new_val > 0) {
-                        
+                        client_accounts[acct_num - 1].num_orders += 1;
+                } else {
+                        client_accounts[acct_num -1].num_payments += 1;
                 }
                 client_accounts[acct_num - 1].amt_owed += new_val;
 
@@ -90,7 +92,7 @@ int main (int argc, char *argv[]) {
         }
         
         for (int i = 0; i < NUM_ACCTS; ++i) {
-                printf("%d\t%d\n", i, client_accounts[i].amt_owed);
+                printf("%d\t%d  %d  %d\n",i, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
         
         free(buff);
