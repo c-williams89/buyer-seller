@@ -4,7 +4,7 @@ CC := gcc-9
 
 # compile flags
 CFLAGS += -std=c18 -Wall -Wextra -Wpedantic -Waggregate-return -Wwrite-strings
-CFLAGS += -Wvla -Wfloat-equal -lm
+CFLAGS += -Wvla -Wfloat-equal -lm -pthread
 CFLAGS += -I./include
 
 DFLAGS := -g3
