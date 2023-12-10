@@ -16,6 +16,8 @@
 #define NUM_ACCTS 5
 
 int main (int argc, char *argv[]) {
+        struct sockaddr_un server_sockaddr;
+        printf("file is: %s\n", argv[1]);
 
         if (1 == argc) {
                 fprintf(stderr, "client: Missing file argument\n");
@@ -46,9 +48,7 @@ int main (int argc, char *argv[]) {
         
         printf("Client is Running\n");
         
-        struct sockaddr_un server_sockaddr;
-        // struct sockaddr_un client_sockaddr;
-	char *server_socket_path = "server_unix_domain_socket";
+	// char *server_socket_path = "server_unix_domain_socket";
 
         int client_sock = client_create_socket();
         if (-1 == client_sock) {
@@ -57,8 +57,7 @@ int main (int argc, char *argv[]) {
 
         server_sockaddr.sun_family = AF_UNIX;
         int len = sizeof(server_sockaddr);
-        strncpy(server_sockaddr.sun_path, server_socket_path, strlen(server_socket_path));
-        // printf("%s\n", server_sockaddr.sun_path);
+        strncpy(server_sockaddr.sun_path, SERVER_PATH, strlen(SERVER_PATH));
 
         if (-1 == connect(client_sock, (struct sockaddr *) &server_sockaddr, len)) {
                 perror("client connection");
@@ -90,13 +89,12 @@ int main (int argc, char *argv[]) {
 
                 send(client_sock, byte_array, 5, 0);
         }
-        printf("Everything send\n");
         for (int i = 0; i < NUM_ACCTS; ++i) {
-                printf("%d\t%d  %d  %d\n",i, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
+                printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
+                // printf("%d\t%d  %d  %d\n",i, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
         
         free(buff);
-
         close(client_sock);
         fclose(fp);
 EXIT:
