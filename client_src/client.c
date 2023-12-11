@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
 	struct sigaction sigint_action;
 	sigset_t sigint_set;
 	sigemptyset(&sigint_set);
-	// sigaddset(&sigint_set, )
 	sigint_action.sa_flags = 0;
 	sigint_action.sa_handler = handle_SIGINT;
 	sigint_action.sa_mask = sigint_set;
@@ -84,21 +83,23 @@ int main(int argc, char *argv[])
 	char *buff = NULL;
 	size_t buff_len = 0;
 	uint8_t byte_array[5] = { 0 };
+	uint32_t packet_sent = 0;
 	while (-1 != getline(&buff, &buff_len, fp)) {
 		if (SIGINT_FLAG) {
 			fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
 			break;
 		}
-		// TODO: Consider adding all this in a helper function
-		//  serialize_data, and deserialize_data on server side
-		//  to mock a custom protocol
+		if (0 == (packet_sent % 10000)) {
+			sleep(1);
+		}
+
 		char *cpy = buff;
 		char *arg = strtok(cpy, " ");
 		uint8_t acct_num = (uint8_t) * arg - '0';
 		byte_array[0] = acct_num;
 		arg = strtok(NULL, "\n");
 		long new_val = strtol(arg, NULL, 10);
-		int32_t *num = (byte_array + 1);
+		int32_t *num = (int32_t *)(byte_array + 1);
 		*num = (int32_t) new_val;
 
 		if (0 == new_val) {
@@ -114,10 +115,12 @@ int main(int argc, char *argv[])
 			perror("client");
 			errno = 0;
 		}
+		packet_sent++;
 	}
 	for (int i = 0; i < NUM_ACCTS; ++i) {
 		if (client_accounts[i].num_orders > 0) {
-			printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1,
+			printf("%-20s %u %7d %5u %5u\n", argv[1],
+			       i + 1,
 			       client_accounts[i].amt_owed,
 			       client_accounts[i].num_orders,
 			       client_accounts[i].num_payments);

@@ -18,6 +18,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct pkg_t {
 	account_t *client_accounts;
+	// account_t client_accounts[NUM_ACCTS];	
 	ssize_t sockfd;
 } pkg_t;
 
@@ -39,9 +40,9 @@ void *thread_func(void *arg)
 			errno = 0;
 		}
 		uint8_t acct_num = byte_array[0];
-		int32_t *amt_owed = (byte_array + 1);
+		int32_t *amt_owed = (int32_t *)(byte_array + 1);
 
-		if (0 == *amt_owed) {
+		if (0 == amt_owed) {
 			continue;
 		}
 		pthread_mutex_lock(&lock);
@@ -126,7 +127,7 @@ int main(void)
 			continue;
 		}
 		pkg_t *pkg = calloc(1, sizeof(*pkg));
-		pkg->client_accounts = &client_accounts;
+		pkg->client_accounts = client_accounts;
 		pkg->sockfd = sockfd;
 
 		pthread_create(thread_list + num_connected, NULL, thread_func,
@@ -141,7 +142,8 @@ int main(void)
 	}
 
 	for (int i = 0; i < NUM_ACCTS; ++i) {
-		printf("network\t%d\t%d  %d  %d\n", i + 1,
+		printf("%-20s %u %7d %5u %5u\n", "network", 
+		       i + 1,
 		       client_accounts[i].amt_owed,
 		       client_accounts[i].num_orders,
 		       client_accounts[i].num_payments);
