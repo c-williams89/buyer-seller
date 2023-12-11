@@ -23,11 +23,9 @@ typedef struct pkg_t {
 } pkg_t;
 
 void *thread_func(void *arg) {
-        printf("thread created\n");
         uint8_t byte_array[5] = { 0 };
         pkg_t *pkg = (pkg_t *)arg;
         account_t *client_accounts = pkg->client_accounts;
-
         size_t received = 0;
         while ((received = recv(pkg->sockfd, byte_array, 5, 0)) > 0) {
                 if (-1 == (int)received) {
@@ -66,6 +64,7 @@ int main(void) {
         memset(&client_sockaddr, 0, sizeof(struct sockaddr_un));
         int server_sock = server_create_socket();
         if (-1 == server_sock) {
+                fprintf(stderr, "Error creating server socket\n");
                 goto EXIT;
         }
         server_sockaddr.sun_family = AF_UNIX;
@@ -86,7 +85,6 @@ int main(void) {
 
         printf("Server: Waiting for connections...\n");
         while (num_connected < NUM_MAX_CLIENTS) {
-                // uint32_t sockfd;
                 uint32_t sockfd = accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len);
                 if (-1 == (int)sockfd) {
                         perror("accept on server");
@@ -94,19 +92,18 @@ int main(void) {
                         continue;
                         // goto EXIT;
                 }
-                pkg_t pkg;
-                pkg.client_accounts = &client_accounts;
-                pkg.sockfd = sockfd;
-                printf("SOCKFD: %d\n", sockfd);
+                pkg_t *pkg = calloc(1, sizeof(*pkg));
+                pkg->client_accounts = &client_accounts;
+                pkg->sockfd = sockfd;
 
-                pthread_create(thread_list + num_connected, NULL, thread_func, (void *)&pkg);
-                // close(sockfd);
+                pthread_create(thread_list + num_connected, NULL, thread_func, (void *)pkg);
                 num_connected ++;
-                printf("Connections: %d\n", num_connected);
         }
 
         for (int i = 0; i < NUM_MAX_CLIENTS; ++i) {
-                pthread_join(thread_list[i], NULL);
+                if (pthread_join(thread_list[i], NULL)) {
+                        fprintf(stderr, "Error joining thread\n");
+                }
         }
 
         for (int i = 0; i < NUM_ACCTS; ++i) {

@@ -28,7 +28,7 @@ static void handle_SIGINT(int signum) {
 }
 
 int main (int argc, char *argv[]) {
-        printf("%ld\n", strlen(CLIENT_PATH));
+        // printf("%ld\n", strlen(CLIENT_PATH));
         // Set up signal handler
         struct sigaction sigint_action;
         sigset_t sigint_set;
@@ -67,10 +67,6 @@ int main (int argc, char *argv[]) {
                 account_t account = {0, 0, 0};
                 client_accounts[i] = account;
         }
-        
-        printf("Client is Running\n");
-        
-	// char *server_socket_path = "server_unix_domain_socket";
 
         int client_sock = client_create_socket();
         if (-1 == client_sock) {
@@ -79,7 +75,7 @@ int main (int argc, char *argv[]) {
 
         server_sockaddr.sun_family = AF_UNIX;
         int len = sizeof(server_sockaddr);
-        strncpy(server_sockaddr.sun_path, SERVER_PATH, strlen(SERVER_PATH));
+        strncpy(server_sockaddr.sun_path, SERVER_PATH, sizeof(server_sockaddr.sun_path));
 
         if (-1 == connect(client_sock, (struct sockaddr *) &server_sockaddr, len)) {
                 perror("client connection");
@@ -115,8 +111,8 @@ int main (int argc, char *argv[]) {
                         client_accounts[acct_num -1].num_payments += 1;
                 }
                 client_accounts[acct_num - 1].amt_owed += new_val;
-
                 // TODO: What use-cases can result in a -1 return value?
+                
                 if (-1 == send(client_sock, byte_array, 5, 0)) {
                         perror("client");
                         errno = 0;
@@ -125,9 +121,11 @@ int main (int argc, char *argv[]) {
         for (int i = 0; i < NUM_ACCTS; ++i) {
                 printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
+        puts("");
         
         free(buff);
         close(client_sock);
+        unlink(CLIENT_PATH);
 FILE_EXIT:
         fclose(fp);
 EXIT:

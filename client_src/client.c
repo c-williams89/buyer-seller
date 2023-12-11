@@ -24,7 +24,7 @@ int client_create_socket() {
         }
 
         client_sockaddr.sun_family = AF_UNIX;
-        strncpy(client_sockaddr.sun_path, CLIENT_PATH, strlen(CLIENT_PATH));
+        strncpy(client_sockaddr.sun_path, CLIENT_PATH, sizeof(client_sockaddr.sun_path));
         unlink(CLIENT_PATH);
 
 EXIT:
