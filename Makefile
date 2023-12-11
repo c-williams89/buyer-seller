@@ -11,23 +11,14 @@ DFLAGS := -g3
 VFLAGS += --leak-check=full --track-origins=yes
 PFLAGS := -pg 
 
-SRC_DIR := src
-OBJ_DIR := obj
 C_OBJ_DIR := cl_obj
 S_OBJ_DIR := serv_obj
 DOCS_DIR := docs
 TEST_DIR := test
 HDR_DIR := include
-LIB_DIR := lib
 DATA_DIR := data
 CLIENT_DIR := client_src
 SERVER_DIR := server_src
-SHARED_DIR := shared
-
-LIB := $(wildcard $(LIB_DIR)/*.a)
-
-# SRCS := $(wildcard $(SRC_DIR)/*.c)
-# OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
 CLIENT_SRCS := $(wildcard $(CLIENT_DIR)/*.c)
 CLIENT_OBJS := $(patsubst $(CLIENT_DIR)/%.c, $(C_OBJ_DIR)/%.o, $(CLIENT_SRCS))
@@ -35,7 +26,6 @@ CLIENT_OBJS := $(patsubst $(CLIENT_DIR)/%.c, $(C_OBJ_DIR)/%.o, $(CLIENT_SRCS))
 SERVER_SRCS := $(wildcard $(SERVER_DIR)/*.c)
 SERVER_OBJS := $(patsubst $(SERVER_DIR)/%.c, $(S_OBJ_DIR)/%.o, $(SERVER_SRCS))
 
-LIB := $(wildcard $(LIB_DIR)/*.a)
 # executable
 BIN := buyer
 CLIENT := client
@@ -66,18 +56,20 @@ clean:
 	@rm -rf $(CLIENT) $(SERVER) $(C_OBJ_DIR) $(S_OBJ_DIR) $(CHECK) gmon.out server_unix_domain_socket
 	
 indent:
-	indent -linux $(SRC_DIR)/*.c
-	@rm $(SRC_DIR)/*.c~
-	indent -linux $(TEST_DIR)/*.c
-	@rm $(TEST_DIR)/*.c~
+	indent -linux $(CLIENT_DIR)/*.c
+	@rm $(CLIENT_DIR)/*.c~
+	indent -linux $(SERVER_DIR)/*.c
+	@rm $(SERVER_DIR)/*.c~
+	# indent -linux $(TEST_DIR)/*.c
+	# @rm $(TEST_DIR)/*.c~
 	indent -linux $(HDR_DIR)/*.h
 	@rm $(HDR_DIR)/*.h~
 
 $(CLIENT): $(CLIENT_OBJS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LIB)
+	$(CC) $(CFLAGS) $^ -o $@
 
 $(SERVER): $(SERVER_OBJS)
-	$(CC) $(CFLAGS) $^ -o $@ $(LIB)
+	$(CC) $(CFLAGS) $^ -o $@
 
 $(C_OBJ_DIR):
 	@mkdir -p $@
