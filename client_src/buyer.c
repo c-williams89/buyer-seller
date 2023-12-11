@@ -28,6 +28,7 @@ static void handle_SIGINT(int signum) {
 }
 
 int main (int argc, char *argv[]) {
+        printf("%ld\n", strlen(CLIENT_PATH));
         // Set up signal handler
         struct sigaction sigint_action;
         sigset_t sigint_set;
@@ -100,7 +101,6 @@ int main (int argc, char *argv[]) {
                 char *cpy = buff;
                 char *arg = strtok(cpy, " ");
                 uint8_t acct_num = (uint8_t)*arg - '0';
-                // byte_array[0] = (uint8_t)*arg - '0';
                 byte_array[0] = acct_num;
                 arg = strtok(NULL, "\n");
                 long new_val = strtol(arg, NULL, 10);

@@ -7,6 +7,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdint.h>
 
 #include "shared.h"
 
@@ -23,11 +24,9 @@ int client_create_socket() {
         }
 
         client_sockaddr.sun_family = AF_UNIX;
-        // int len = sizeof(client_sockaddr);
         strncpy(client_sockaddr.sun_path, CLIENT_PATH, strlen(CLIENT_PATH));
         unlink(CLIENT_PATH);
 
 EXIT:
-
         return client_sock;
 }

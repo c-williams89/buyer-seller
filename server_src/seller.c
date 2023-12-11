@@ -6,6 +6,7 @@
 #include <sys/un.h>
 #include <stdint.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "server.h"
 #include "shared.h"
@@ -22,24 +23,25 @@ typedef struct pkg_t {
 } pkg_t;
 
 void *thread_func(void *arg) {
-        // printf("thread created\n");
+        printf("thread created\n");
         uint8_t byte_array[5] = { 0 };
         pkg_t *pkg = (pkg_t *)arg;
         account_t *client_accounts = pkg->client_accounts;
 
         size_t received = 0;
         while ((received = recv(pkg->sockfd, byte_array, 5, 0)) > 0) {
-                if (-1 == received) {
+                if (-1 == (int)received) {
                         perror("server_receive");
                         errno = 0;
                 }
                 uint8_t acct_num = byte_array[0];
                 int32_t *amt_owed = (byte_array + 1);
 
-                pthread_mutex_lock(&lock);
                 if (0 == *amt_owed) {
                         continue;
-                } else if (*amt_owed > 0) {
+                }
+                pthread_mutex_lock(&lock);
+                if (*amt_owed > 0) {
                         client_accounts[acct_num - 1].num_orders += 1;
                 } else {
                         client_accounts[acct_num - 1].num_payments += 1;
@@ -50,8 +52,6 @@ void *thread_func(void *arg) {
 }
 
 int main(void) {
-        // printf("Server is running\n");
-
         account_t client_accounts[NUM_ACCTS] = { 0 };
         for (int i = 0; i < NUM_ACCTS; ++i) {
                 account_t account = {0, 0, 0};
@@ -84,10 +84,11 @@ int main(void) {
                 goto EXIT;
         }
 
+        printf("Server: Waiting for connections...\n");
         while (num_connected < NUM_MAX_CLIENTS) {
-                uint32_t sockfd;
-                sockfd = accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len);
-                if (-1 == sockfd) {
+                // uint32_t sockfd;
+                uint32_t sockfd = accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len);
+                if (-1 == (int)sockfd) {
                         perror("accept on server");
                         errno = 0;
                         continue;
@@ -96,9 +97,12 @@ int main(void) {
                 pkg_t pkg;
                 pkg.client_accounts = &client_accounts;
                 pkg.sockfd = sockfd;
+                printf("SOCKFD: %d\n", sockfd);
 
                 pthread_create(thread_list + num_connected, NULL, thread_func, (void *)&pkg);
+                // close(sockfd);
                 num_connected ++;
+                printf("Connections: %d\n", num_connected);
         }
 
         for (int i = 0; i < NUM_MAX_CLIENTS; ++i) {
@@ -109,6 +113,6 @@ int main(void) {
                 printf("network\t%d\t%d  %d  %d\n", i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
 EXIT:
-        // close(server_sock);   
+        close(server_sock);   
         return 1;        
 }
