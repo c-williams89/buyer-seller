@@ -40,9 +40,9 @@ void *thread_func(void *arg)
 			errno = 0;
 		}
 		uint8_t acct_num = byte_array[0];
-		int32_t *amt_owed = (byte_array + 1);
+		int32_t *amt_owed = (int32_t *)(byte_array + 1);
 
-		if (0 == *amt_owed) {
+		if (0 == amt_owed) {
 			continue;
 		}
 		pthread_mutex_lock(&lock);
@@ -142,7 +142,8 @@ int main(void)
 	}
 
 	for (int i = 0; i < NUM_ACCTS; ++i) {
-		printf("network\t%d\t%d  %d  %d\n", i + 1,
+		printf("%-20s %u %7d %5u %5u\n", "network", 
+		       i + 1,
 		       client_accounts[i].amt_owed,
 		       client_accounts[i].num_orders,
 		       client_accounts[i].num_payments);
