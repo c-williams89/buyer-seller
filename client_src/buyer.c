@@ -7,6 +7,9 @@
 #include <sys/socket.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <signal.h>
+#include <setjmp.h>
+
 
 #include "client.h"
 #include "shared.h"
@@ -15,9 +18,27 @@
 
 #define NUM_ACCTS 5
 
+sig_atomic_t SIGINT_FLAG = 0;
+jmp_buf env;
+
+static void handle_SIGINT(int signum) {
+        (void)signum;
+        longjmp(env, 1);
+        SIGINT_FLAG = 1;
+}
+
 int main (int argc, char *argv[]) {
+        // Set up signal handler
+        struct sigaction sigint_action;
+        sigset_t sigint_set;
+        sigemptyset(&sigint_set);
+        // sigaddset(&sigint_set, )
+        sigint_action.sa_flags = 0;
+        sigint_action.sa_handler = handle_SIGINT;
+        sigint_action.sa_mask = sigint_set;
+        sigaction(SIGINT, &sigint_action, NULL);
+        
         struct sockaddr_un server_sockaddr;
-        printf("file is: %s\n", argv[1]);
 
         if (1 == argc) {
                 fprintf(stderr, "client: Missing file argument\n");
@@ -37,7 +58,7 @@ int main (int argc, char *argv[]) {
         }
 
         if (!validate_file(fp)) {
-                goto EXIT;
+                goto FILE_EXIT;
         }
 
         account_t client_accounts[NUM_ACCTS] = { 0 };
@@ -45,10 +66,6 @@ int main (int argc, char *argv[]) {
                 account_t account = {0, 0, 0};
                 client_accounts[i] = account;
         }
-        
-        printf("Client is Running\n");
-        
-	// char *server_socket_path = "server_unix_domain_socket";
 
         int client_sock = client_create_socket();
         if (-1 == client_sock) {
@@ -57,27 +74,34 @@ int main (int argc, char *argv[]) {
 
         server_sockaddr.sun_family = AF_UNIX;
         int len = sizeof(server_sockaddr);
-        strncpy(server_sockaddr.sun_path, SERVER_PATH, strlen(SERVER_PATH));
+        strncpy(server_sockaddr.sun_path, SERVER_PATH, sizeof(server_sockaddr.sun_path));
 
         if (-1 == connect(client_sock, (struct sockaddr *) &server_sockaddr, len)) {
                 perror("client connection");
                 errno = 0;
-                goto EXIT;
+                goto FILE_EXIT;
         }
 
         char *buff = NULL;
         size_t buff_len = 0;
         uint8_t byte_array[5] = { 0 };
         while (-1 != getline(&buff, &buff_len, fp)) {
+                if (SIGINT_FLAG) {
+                        fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
+                        break;
+                }
+                // TODO: Consider adding all this in a helper function
+                //  serialize_data, and deserialize_data on server side
+                //  to mock a custom protocol
                 char *cpy = buff;
                 char *arg = strtok(cpy, " ");
                 uint8_t acct_num = (uint8_t)*arg - '0';
-                // byte_array[0] = (uint8_t)*arg - '0';
                 byte_array[0] = acct_num;
                 arg = strtok(NULL, "\n");
                 long new_val = strtol(arg, NULL, 10);
                 int32_t *num = (byte_array + 1);
                 *num = (int32_t)new_val;
+                
                 if (0 == new_val) {
                         continue;
                 } else if (new_val > 0) {
@@ -86,15 +110,22 @@ int main (int argc, char *argv[]) {
                         client_accounts[acct_num -1].num_payments += 1;
                 }
                 client_accounts[acct_num - 1].amt_owed += new_val;
-
-                send(client_sock, byte_array, 5, 0);
+                
+                if (-1 == send(client_sock, byte_array, 5, 0)) {
+                        perror("client");
+                        errno = 0;
+                }
         }
         for (int i = 0; i < NUM_ACCTS; ++i) {
-                printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
+                if (client_accounts[i].num_orders > 0) {
+                        printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
+                }
         }
-        
+        puts("");
         free(buff);
         close(client_sock);
+        unlink(CLIENT_PATH);
+FILE_EXIT:
         fclose(fp);
 EXIT:
         return 1;
