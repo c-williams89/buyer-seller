@@ -56,6 +56,7 @@ void *thread_func(void *arg) {
                 pthread_mutex_unlock(&lock);
         }
         free(pkg);
+        return NULL;
 }
 
 int main(void) {
@@ -84,17 +85,17 @@ int main(void) {
         
         struct sockaddr_un client_sockaddr;
         memset(&client_sockaddr, 0, sizeof(struct sockaddr_un));
-        
+        socklen_t len = sizeof(server_sockaddr);
+
         int server_sock = server_create_socket();
         if (-1 == server_sock) {
                 fprintf(stderr, "Error creating server socket\n");
                 goto EXIT;
         }
         server_sockaddr.sun_family = AF_UNIX;
-        strncpy(server_sockaddr.sun_path, SERVER_PATH, strlen(SERVER_PATH));
+        strncpy(server_sockaddr.sun_path, SERVER_PATH, sizeof(server_sockaddr.sun_path));
 
-        int len = sizeof(server_sockaddr);
-        if (-1 == bind(server_sock, (struct sockaddr_un *) &server_sockaddr, len)) {
+        if (-1 == bind(server_sock, (struct sockaddr *) &server_sockaddr, len)) {
                 perror("server connection");
                 errno = 0;
                 goto EXIT;
@@ -107,14 +108,15 @@ int main(void) {
         }
 
         printf("Server: Waiting for connections...\n");
+        
         while (num_connected < NUM_MAX_CLIENTS) {
-                printf("In while loop\n");
                 if (SIGINT_FLAG) {
                         fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
                         break;    
                 }
-                uint32_t sockfd = accept(server_sock, (struct sockaddr_un *) &client_sockaddr, &len);
+                uint32_t sockfd = accept(server_sock, (struct sockaddr *) &client_sockaddr, &len);
                 if (-1 == (int)sockfd) {
+                        // Handle errno 4, EINTR: Interrupted System Call
                         if (4 == errno) {
                                 continue;
                         }

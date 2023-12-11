@@ -110,7 +110,6 @@ int main (int argc, char *argv[]) {
                         client_accounts[acct_num -1].num_payments += 1;
                 }
                 client_accounts[acct_num - 1].amt_owed += new_val;
-                // TODO: What use-cases can result in a -1 return value?
                 
                 if (-1 == send(client_sock, byte_array, 5, 0)) {
                         perror("client");
@@ -123,7 +122,6 @@ int main (int argc, char *argv[]) {
                 }
         }
         puts("");
-        
         free(buff);
         close(client_sock);
         unlink(CLIENT_PATH);
