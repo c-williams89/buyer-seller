@@ -104,7 +104,7 @@ int main(void) {
         for (int i = 0; i < NUM_MAX_CLIENTS; ++i) {
                 pthread_join(thread_list[i], NULL);
         }
-        // pthread_join(thread_list[0], NULL);
+
         for (int i = 0; i < NUM_ACCTS; ++i) {
                 printf("network\t%d\t%d  %d  %d\n", i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
         }
