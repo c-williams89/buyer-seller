@@ -1,6 +1,26 @@
 #include <check.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "client_helper.h"
+
+START_TEST (test_validate_file_invalid) {
+        char *invalid_files[] = {
+                "/dev/null",
+                "/dev/urandom",
+                "/dev/zero",
+                "./test/",
+                "./test/test_data/0_file"
+        };
+
+        for (int i = 0; i < 5; ++i) {
+                FILE *fp = fopen(invalid_files[i], "r");
+                ck_assert_int_eq(validate_file(fp), 0);
+        }
+} END_TEST
 
 TFun client_helper_tests[] = {
+        test_validate_file_invalid,
         NULL
 };
 

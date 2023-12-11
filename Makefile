@@ -26,16 +26,30 @@ CLIENT_OBJS := $(patsubst $(CLIENT_DIR)/%.c, $(C_OBJ_DIR)/%.o, $(CLIENT_SRCS))
 SERVER_SRCS := $(wildcard $(SERVER_DIR)/*.c)
 SERVER_OBJS := $(patsubst $(SERVER_DIR)/%.c, $(S_OBJ_DIR)/%.o, $(SERVER_SRCS))
 
-# executable
-BIN := buyer
+# executables
 CLIENT := client
 SERVER := server
-CHECK := $(BIN)_check
+# CHECK := $(CLIENT)_check
+CHECK := buyer_check
+# CHECK += $(SERVER)_check
 
 TESTS := $(wildcard $(TEST_DIR)/*.c)
-TEST_OBJS := $(filter-out $(OBJ_DIR)/minorly.o, $(OBJS))
-TEST_OBJS += $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TESTS))
+# TEST_OBJS := $(filter-out $(C_OBJ_DIR/client.o), $(CLIENT_OBJS))
+# TEST_OBJS += $(filter-out $(S_OBJ_DIR/server.o), $(SERVER_OBJS))
+# TEST_OBJS += $(patsubst $(TEST_DIR)/%.c, $())
+
+# TEST_OBJS := $(filter-out $(OBJ_DIR)/minorly.o, $(OBJS))
+# TEST_OBJS += $(patsubst $(TEST_DIR)/%.c, $(OBJ_DIR)/%.o, $(TESTS))
 TEST_LIBS := -lcheck -lm -pthread -lrt -lsubunit
+
+CL_TEST_OBJS := $(filter-out $(C_OBJ_DIR)/client.o, $(CLIENT_OBJS))
+CL_TEST_OBJS += $(patsubst $(TEST_DIR)/%.c, $(C_OBJ_DIR)/%.o, $(TESTS))
+
+S_TEST_OBJS := $(filter-out $(S_OBJ_DIR)/server.o, $(SERVER_OBJS))
+S_TEST_OBJS += $(patsubst $(TEST_DIR)/%.c, $(S_OBJ_DIR)/%.o, $(TESTS))
+
+TEST_OBJS := $(CL_TEST_OBJS)
+TEST_OBJS += $(S_TEST_OBJS)
 
 all: $(CLIENT) $(SERVER)
 
@@ -82,6 +96,10 @@ $(C_OBJ_DIR)/%.o: $(CLIENT_DIR)/%.c | $(C_OBJ_DIR)
 
 $(S_OBJ_DIR)/%.o: $(SERVER_DIR)/%.c | $(S_OBJ_DIR)
 	@$(CC) $(CFLAGS) -c $< -o $@
+
+# $(CHECK): $(TEST_OBJS)
+# 	$(CC) $(CFLAGS) $^ -o $@ $(TEST_LIBS) $(LIB)
+# 	./$(CHECK)
 
 $(CHECK): $(TEST_OBJS)
 	$(CC) $(CFLAGS) $^ -o $@ $(TEST_LIBS) $(LIB)
