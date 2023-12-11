@@ -18,6 +18,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct pkg_t {
 	account_t *client_accounts;
+	// account_t client_accounts[NUM_ACCTS];	
 	ssize_t sockfd;
 } pkg_t;
 
@@ -126,7 +127,7 @@ int main(void)
 			continue;
 		}
 		pkg_t *pkg = calloc(1, sizeof(*pkg));
-		pkg->client_accounts = &client_accounts;
+		pkg->client_accounts = client_accounts;
 		pkg->sockfd = sockfd;
 
 		pthread_create(thread_list + num_connected, NULL, thread_func,
