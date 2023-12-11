@@ -28,7 +28,6 @@ static void handle_SIGINT(int signum) {
 }
 
 int main (int argc, char *argv[]) {
-        // printf("%ld\n", strlen(CLIENT_PATH));
         // Set up signal handler
         struct sigaction sigint_action;
         sigset_t sigint_set;
@@ -119,7 +118,9 @@ int main (int argc, char *argv[]) {
                 }
         }
         for (int i = 0; i < NUM_ACCTS; ++i) {
-                printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
+                if (client_accounts[i].num_orders > 0) {
+                        printf("%s\t%d  %d  %d  %d\n", argv[1], i + 1, client_accounts[i].amt_owed, client_accounts[i].num_orders, client_accounts[i].num_payments);
+                }
         }
         puts("");
         
