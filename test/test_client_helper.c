@@ -19,8 +19,21 @@ START_TEST (test_validate_file_invalid) {
         }
 } END_TEST
 
+START_TEST (test_validate_file_valid) {
+        char *valid_file = "./data/seller1.dat";
+        FILE *fp = fopen(valid_file, "r");
+        ck_assert_int_eq(validate_file(fp), 1);
+}END_TEST
+
+START_TEST (test_client_create_socket) {
+        ck_assert_int_ne(client_create_socket(), -1);
+        ck_assert_int_ge(client_create_socket(), 2);
+}END_TEST
+
 TFun client_helper_tests[] = {
         test_validate_file_invalid,
+        test_validate_file_valid,
+        test_client_create_socket,
         NULL
 };
 
