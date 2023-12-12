@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <signal.h>
-#include <setjmp.h>
 #include <time.h>
 #include <stdbool.h>
 
@@ -39,6 +38,7 @@ static void register_signal_handler(void)
 int main(int argc, char *argv[])
 {
 	register_signal_handler();
+	int exit_status = 1;
 
 	struct sockaddr_un server_sockaddr;
 
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 		if ((0 == strncmp(argv[2], "-p", 3))) {
 			b_is_process_flag = true;
 		} else {
-			fprintf(stderr, "client: invalid option -- '%s'\n",
+			fprintf(stderr, "client: invalid option -'%s'\n",
 				argv[2]);
 			goto EXIT;
 		}
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 
 	if (-1 ==
 	    connect(client_sock, (struct sockaddr *)&server_sockaddr, len)) {
-		perror("client connection");
+		perror("client");
 		errno = 0;
 		goto FILE_EXIT;
 	}
@@ -106,11 +106,12 @@ int main(int argc, char *argv[])
 	clock_t t = 0;
 	int total_time = 0;
 	double trans_per_sec = 0.0;
-
+	exit_status = 0;
 	printf("Client Connected: Sending data...\n");
 	while (-1 != getline(&buff, &buff_len, fp)) {
 		if (SIGINT_FLAG) {
 			fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
+			exit_status = 1;
 			break;
 		}
 		if (0 == (packet_sent % 10000)) {
@@ -186,5 +187,5 @@ int main(int argc, char *argv[])
  FILE_EXIT:
 	fclose(fp);
  EXIT:
-	return 1;
+	return exit_status;
 }
