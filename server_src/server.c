@@ -17,7 +17,7 @@
 
 sig_atomic_t SIGINT_FLAG = 0;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-bool clock_time = false;
+bool b_is_process_flag = false;
 
 typedef struct pkg_t {
 	account_t *client_accounts;
@@ -61,6 +61,11 @@ void *thread_func(void *arg)
 			perror("server_receive");
 			errno = 0;
 		}
+
+		/**
+		 * Deserialize the byte array into integer values that can be
+		 * assigned to member variables of the account_t struct. 
+		 */
 		uint8_t acct_num = byte_array[0];
 		int32_t *amt_owed = (int32_t *) (byte_array + 1);
 
@@ -78,12 +83,14 @@ void *thread_func(void *arg)
 		pthread_mutex_unlock(&lock);
 		packets++;
 	}
+
 	total_time = clock() - t;
 	trans_per_sec = (double)packets / ((double)total_time / CLOCKS_PER_SEC);
-	if (clock_time) {
+	if (b_is_process_flag) {
 		printf("Socket Connection %ld transaction data:\t%.2f t/s\n",
 		       pkg->sockfd, trans_per_sec);
 	}
+	close(pkg->sockfd);
 	free(pkg);
 	return NULL;
 }
@@ -98,7 +105,7 @@ int main(int argc, char *argv[])
 	} else {
 		if (2 == argc) {
 			if ((0 == strncmp(argv[1], "-p", 3))) {
-				clock_time = true;
+				b_is_process_flag = true;
 			} else {
 				fprintf(stderr,
 					"server: invalid option -'%s'\n",
@@ -124,11 +131,17 @@ int main(int argc, char *argv[])
 	memset(&client_sockaddr, 0, sizeof(struct sockaddr_un));
 	socklen_t len = sizeof(server_sockaddr);
 
+	// Create a UNIX domain stream socket
 	int server_sock = server_create_socket();
 	if (-1 == server_sock) {
 		fprintf(stderr, "Error creating server socket\n");
 		goto EXIT;
 	}
+
+	/**
+	 * Set up the UNIX sockaddr structure with AF_UNIX for the family and 
+	 * filepath for server path defined in shared.h to bind to. 
+	 */
 	server_sockaddr.sun_family = AF_UNIX;
 	strncpy(server_sockaddr.sun_path, SERVER_PATH,
 		sizeof(server_sockaddr.sun_path));
@@ -139,6 +152,7 @@ int main(int argc, char *argv[])
 		goto EXIT;
 	}
 
+	// Listen for any client sockets.
 	if (-1 == listen(server_sock, 10)) {
 		perror("listen on server");
 		errno = 0;
@@ -147,6 +161,11 @@ int main(int argc, char *argv[])
 
 	printf("Server: Waiting for connections...\n");
 
+	/**
+	 * Server will accept a total of 10 client connections, either
+	 * individually or at once. With each successful accept, create a
+	 * thread for the new connection. 
+	 */
 	while (num_connected < NUM_MAX_CLIENTS) {
 		if (SIGINT_FLAG) {
 			fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
@@ -173,12 +192,21 @@ int main(int argc, char *argv[])
 		num_connected++;
 	}
 
+	/**
+	 * Join all threads after the server has accepted 10 client threads. If
+	 * server was terminated prior to all 10 threads executing, print error
+	 * message that thread was not created. 
+	 */
 	for (int i = 0; i < NUM_MAX_CLIENTS; ++i) {
 		if (pthread_join(thread_list[i], NULL)) {
 			fprintf(stderr, "Error joining thread\n");
 		}
 	}
 
+	/**
+	 * Print account information for each account using the format:
+	 * %-20s %u %7d %5u %5u\n
+	 */
 	for (int i = 0; i < NUM_ACCTS; ++i) {
 		printf("%-20s %u %7d %5u %5u\n", "network",
 		       i + 1,

@@ -17,7 +17,7 @@
 #include "shared.h"
 
 sig_atomic_t SIGINT_FLAG = 0;
-bool clock_time = false;
+bool b_is_process_flag = false;
 
 static void handle_SIGINT(int signum)
 {
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	}
 	if (3 == argc) {
 		if ((0 == strncmp(argv[2], "-p", 3))) {
-			clock_time = true;
+			b_is_process_flag = true;
 		} else {
 			fprintf(stderr, "client: invalid option -- '%s'\n",
 				argv[2]);
@@ -77,11 +77,16 @@ int main(int argc, char *argv[])
 		client_accounts[i] = account;
 	}
 
+	// Create client socket
 	int client_sock = client_create_socket();
 	if (-1 == client_sock) {
 		goto EXIT;
 	}
 
+	/**
+	 * Set up the UNIX sockaddr structure for the server socket and connect
+	 * to it. 
+	 */
 	server_sockaddr.sun_family = AF_UNIX;
 	int len = sizeof(server_sockaddr);
 	strncpy(server_sockaddr.sun_path, SERVER_PATH,
@@ -109,13 +114,18 @@ int main(int argc, char *argv[])
 			break;
 		}
 		if (0 == (packet_sent % 10000)) {
-			printf("sleeping\n");
 			if (-1 == usleep(1000000)) {
 				errno = 0;
 				break;
 			}
 		}
 
+		/**
+		 * Serialize each transaction data to send to server. Serialized
+		 * data is in the form of an 5-byte byte array, where the first
+		 * byte is the account number, and remaining four bytes is the
+		 * transaction amount. 
+		 */
 		char *cpy = buff;
 		char *arg = strtok(cpy, " ");
 		uint8_t acct_num = (uint8_t) * arg - '0';
@@ -125,6 +135,7 @@ int main(int argc, char *argv[])
 		int32_t *num = (int32_t *) (byte_array + 1);
 		*num = (int32_t) new_val;
 
+		// If the transaction amount is 0, it is to be disregarded.
 		if (0 == new_val) {
 			continue;
 		}
@@ -149,6 +160,11 @@ int main(int argc, char *argv[])
 
 	trans_per_sec =
 	    (double)packet_sent / ((double)total_time / CLOCKS_PER_SEC);
+
+	/**
+	 * Print account information for each account using the format:
+	 * %-20s %u %7d %5u %5u\n
+	 */
 	for (int i = 0; i < NUM_ACCTS; ++i) {
 		if (client_accounts[i].num_orders > 0) {
 			printf("%-20s %u %7d %5u %5u\n", argv[1],
@@ -158,9 +174,11 @@ int main(int argc, char *argv[])
 			       client_accounts[i].num_payments);
 		}
 	}
-	if (clock_time) {
+
+	if (b_is_process_flag) {
 		printf("Transmissions per second: %.2f\n", trans_per_sec);
 	}
+
 	puts("");
 	free(buff);
 	close(client_sock);

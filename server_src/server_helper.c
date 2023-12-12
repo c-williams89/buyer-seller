@@ -9,6 +9,7 @@
 
 int server_create_socket(void)
 {
+	// Create a UNIX domain stream socket and return the fd.
 	int server_sock = -1;
 
 	server_sock = socket(AF_UNIX, SOCK_STREAM, 0);
