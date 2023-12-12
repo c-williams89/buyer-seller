@@ -101,6 +101,9 @@ int main(int argc, char *argv[])
 		long new_val = strtol(arg, NULL, 10);
 		int32_t *num = (int32_t *)(byte_array + 1);
 		*num = (int32_t) new_val;
+		
+		// put trans/second logic here
+		// t = clock()
 
 		if (0 == new_val) {
 			continue;
@@ -115,8 +118,12 @@ int main(int argc, char *argv[])
 			perror("client");
 			errno = 0;
 		}
+		// get time delta
+		// add timedelta to total time
 		packet_sent++;
 	}
+	//divide by 
+	
 	for (int i = 0; i < NUM_ACCTS; ++i) {
 		if (client_accounts[i].num_orders > 0) {
 			printf("%-20s %u %7d %5u %5u\n", argv[1],
