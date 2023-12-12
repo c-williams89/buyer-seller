@@ -9,15 +9,18 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
+#include <stdbool.h>
 
 #include "server_helper.h"
 #include "shared.h"
 
 sig_atomic_t SIGINT_FLAG = 0;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-//'Droid Sans Mono', 'monospace', monospace
+bool clock_time = false;
+
 typedef struct pkg_t {
-	account_t *client_accounts;	
+	account_t *client_accounts;
 	ssize_t sockfd;
 } pkg_t;
 
@@ -27,23 +30,44 @@ static void handle_SIGINT(int signum)
 	SIGINT_FLAG = 1;
 }
 
+static void register_signal_handler(void)
+{
+	struct sigaction sigint_action;
+	sigset_t sigint_set;
+	sigemptyset(&sigint_set);
+	sigint_action.sa_flags = 0;
+	sigint_action.sa_handler = handle_SIGINT;
+	sigint_action.sa_mask = sigint_set;
+	sigaction(SIGINT, &sigint_action, NULL);
+}
+
 void *thread_func(void *arg)
 {
+	if (!arg) {
+		fprintf(stderr, "server: NULL thread arg\n");
+		return NULL;
+	}
 	uint8_t byte_array[5] = { 0 };
 	pkg_t *pkg = (pkg_t *) arg;
 	account_t *client_accounts = pkg->client_accounts;
 	size_t received = 0;
+	uint32_t packets = 0;
+	clock_t t = 0;
+	int total_time = 0;
+	double trans_per_sec = 0.0;
+	t = clock();
 	while ((received = recv(pkg->sockfd, byte_array, 5, 0)) > 0) {
 		if (-1 == (int)received) {
 			perror("server_receive");
 			errno = 0;
 		}
 		uint8_t acct_num = byte_array[0];
-		int32_t *amt_owed = (int32_t *)(byte_array + 1);
+		int32_t *amt_owed = (int32_t *) (byte_array + 1);
 
 		if (0 == amt_owed) {
 			continue;
 		}
+
 		pthread_mutex_lock(&lock);
 		if (*amt_owed > 0) {
 			client_accounts[acct_num - 1].num_orders += 1;
@@ -52,21 +76,37 @@ void *thread_func(void *arg)
 		}
 		client_accounts[acct_num - 1].amt_owed += *amt_owed;
 		pthread_mutex_unlock(&lock);
+		packets++;
+	}
+	total_time = clock() - t;
+	trans_per_sec = (double)packets / ((double)total_time / CLOCKS_PER_SEC);
+	if (clock_time) {
+		printf("Socket Connection %ld transaction data:\t%.2f t/s\n",
+		       pkg->sockfd, trans_per_sec);
 	}
 	free(pkg);
 	return NULL;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
-	// Register signal handler for SIGINT
-	struct sigaction sigint_action;
-	sigset_t sigint_set;
-	sigemptyset(&sigint_set);
-	sigint_action.sa_flags = 0;
-	sigint_action.sa_handler = handle_SIGINT;
-	sigint_action.sa_mask = sigint_set;
-	sigaction(SIGINT, &sigint_action, NULL);
+	register_signal_handler();
+
+	if (argc > 2) {
+		fprintf(stderr, "server: Too many arguments\n");
+		goto ARG_EXIT;
+	} else {
+		if (2 == argc) {
+			if ((0 == strncmp(argv[1], "-p", 3))) {
+				clock_time = true;
+			} else {
+				fprintf(stderr,
+					"server: invalid option -'%s'\n",
+					argv[1]);
+				goto ARG_EXIT;
+			}
+		}
+	}
 
 	account_t client_accounts[NUM_ACCTS] = { 0 };
 	for (int i = 0; i < NUM_ACCTS; ++i) {
@@ -140,13 +180,15 @@ int main(void)
 	}
 
 	for (int i = 0; i < NUM_ACCTS; ++i) {
-		printf("%-20s %u %7d %5u %5u\n", "network", 
+		printf("%-20s %u %7d %5u %5u\n", "network",
 		       i + 1,
 		       client_accounts[i].amt_owed,
 		       client_accounts[i].num_orders,
 		       client_accounts[i].num_payments);
 	}
+
  EXIT:
 	close(server_sock);
+ ARG_EXIT:
 	return 1;
 }
