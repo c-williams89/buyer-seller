@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,17 +17,15 @@
 #include "shared.h"
 
 sig_atomic_t SIGINT_FLAG = 0;
-jmp_buf env;
 bool clock_time = false;
 
 static void handle_SIGINT(int signum)
 {
 	(void)signum;
-	longjmp(env, 1);
 	SIGINT_FLAG = 1;
 }
 
-static void regist_signal_handler(void)
+static void register_signal_handler(void)
 {
 	struct sigaction sigint_action;
 	sigset_t sigint_set;
@@ -39,7 +38,8 @@ static void regist_signal_handler(void)
 
 int main(int argc, char *argv[])
 {
-	regist_signal_handler();
+	register_signal_handler();
+
 	struct sockaddr_un server_sockaddr;
 
 	if (1 == argc) {
@@ -102,13 +102,18 @@ int main(int argc, char *argv[])
 	int total_time = 0;
 	double trans_per_sec = 0.0;
 
+	printf("Client Connected: Sending data...\n");
 	while (-1 != getline(&buff, &buff_len, fp)) {
 		if (SIGINT_FLAG) {
 			fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
 			break;
 		}
 		if (0 == (packet_sent % 10000)) {
-			sleep(1);
+			printf("sleeping\n");
+			if (-1 == usleep(1000000)) {
+				errno = 0;
+				break;
+			}
 		}
 
 		char *cpy = buff;
