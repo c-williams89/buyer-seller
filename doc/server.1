@@ -1,0 +1,92 @@
+.TH "server" "1" "12 December 2023" "WO1 Clayton E. Williams" "WOBC Project"
+.SH "NAME"
+.PP
+server - establish UNIX domain stream sockets with up to 10 clients to receive
+and parse data.
+.SH "SYNOPSIS"
+\fBserver\fR<\fIOPTION\fR>
+.sh "DESCRIPTION"
+.PP
+The program \fBserver\fR is a comman\-line utility tool for creating a server
+that listens to and establishes connections for up to 10 clients, inclusive.
+\fBserver\fR receives account transactions from the \fBclient\fR program, and
+deserializes the transmission and updates account information. \fBserver\fR 
+uses threads for each client connection to ensure integrity of the account data.
+.br
+\fBserver\fR will continue listening until it has established 10 connections. 
+\fIctl + C\fR to terminate the server early. Output will show account statistics
+to that point and may differ based on thread execution when terminated.
+.PP
+.SH "OPTIONS"
+.PP
+\fB-p\fR
+.RS 4
+Prints the number of transactions per second from each client process.
+.br
+.RE 
+.SH "USAGE AND EXAMPLES"
+.PP
+\fBserver\fR
+.br
+.specify.if n\{\
+.RS 4
+./}
+.nf
+Server: Waiting for connections...
+network              1       0 49929 49929
+network              2       0 49787 49787
+network              3       0 49717 49717
+network              4       0 49746 49746
+network              5       0 49724 49724
+.fi 
+.PP
+\fBserver -p\fR
+.br
+.specify.if n\{\
+.RS 4
+./}
+.nf
+Server: Waiting for connections...
+Socket Connection 4 transaction data:	35580.70 t/s
+Socket Connection 5 transaction data:	35587.41 t/s
+Socket Connection 7 transaction data:	34084.12 t/s
+Socket Connection 6 transaction data:	33935.01 t/s
+Socket Connection 8 transaction data:	32702.30 t/s
+Socket Connection 11 transaction data:	32140.54 t/s
+Socket Connection 13 transaction data:	30833.44 t/s
+Socket Connection 12 transaction data:	30736.78 t/s
+Socket Connection 9 transaction data:	30271.44 t/s
+Socket Connection 10 transaction data:	30286.64 t/s
+network              1       0 49929 49929
+network              2       0 49787 49787
+network              3       0 49717 49717
+network              4       0 49746 49746
+network              5       0 49724 49724
+.fi
+.PP
+\fBserver\fR with early termination
+.br
+.specify.if n\{\
+.RS 4
+./}
+.nf
+Server: Waiting for connections...
+^Cnetwork              1       0 49929 49929
+network              2       0 49787 49787
+network              3       0 49717 49717
+network              4       0 49746 49746
+network              5       0 49724 49724
+.fi
+.PP
+.SH "RETURN VALUES"
+.PP
+On success, \fBserver\fR returns 0. On failure, \fBserver\fR returns 1, sets
+\fIerrno\fR if appropriate, and writes error messages to \fIstderr\fR.
+.SH "LICENSE"
+.SH "AUTHOR"
+.PP
+WO1 Clayton E. Williams
+.PP
+clayton.e.williams15.mil@army.mil
+.SH "COPYRIGHT"
+.PP
