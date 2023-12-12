@@ -1,0 +1,63 @@
+.TH "client" "1" "12 December 2023" "WO1 Clayton E. Williams" "WOBC Project"
+.SH "NAME"
+.PP
+client - read and parse a data file of account numbers and transactions and
+send them to a server.
+.SH "SYNOPSIS"
+\fBclient\fR [\fIFILE_OPTION\fR] <\fIOPTION\fR>
+.sh "DESCRIPTION"
+.PP
+The program \fBclient\fR is a command\-line uitility tool for reading and
+parsing a data file consisting of transactions, sending those transactions to a
+server through UNIX domain stream socket, and compiling the data file into an
+easily read output.
+[\fIFILE_OPTION\fR] must be space separated values in the form of "\fIACCT_NUM\fR \fITRANS_AMT\fB" 
+and account number must be between 1 and 5, inclusive.
+.PP
+.SH "OPTIONS"
+.PP
+\fB-p\fR
+.RS 4
+Prints the number of transactions per second sent to the server. Ignores the
+processing time required to read and serialize the transaction data.
+.br
+.RE 
+.SH "USAGE AND EXAMPLES"
+.PP
+\fBclient data/seller1.dat\fR
+.br
+.specify.if n\{\
+.RS 4
+./}
+.nf
+Client Connected: Sending data...
+data/seller1.dat     2       0  8308  8308
+data/seller1.dat     3       0  8226  8226
+data/seller1.dat     4       0  8363  8363
+.fi 
+.PP
+\fBclient data/seller1.dat -p\fR
+.br
+.specify.if n\{\
+.RS 4
+./}
+.nf
+Client Connected: Sending data...
+data/seller1.dat     2       0  8308  8308
+data/seller1.dat     3       0  8226  8226
+data/seller1.dat     4       0  8363  8363
+Transmissions per second: 395278.32
+.fi 
+.PP
+.SH "RETURN VALUES"
+.PP
+On success, \fBclient\fR returns 0. On failure, \fBclient\fR returns 1, sets
+\fIerrno\fR if appropriate, and writes error messages to \fIstderr\fR.
+.SH "LICENSE"
+.SH "AUTHOR"
+.PP
+WO1 Clayton E. Williams
+.PP
+clayton.e.williams15.mil@army.mil
+.SH "COPYRIGHT"
+.PP
