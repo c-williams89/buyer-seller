@@ -98,6 +98,7 @@ void *thread_func(void *arg)
 int main(int argc, char *argv[])
 {
 	register_signal_handler();
+	int exit_status = 1;
 
 	if (argc > 2) {
 		fprintf(stderr, "server: Too many arguments\n");
@@ -151,7 +152,6 @@ int main(int argc, char *argv[])
 		errno = 0;
 		goto EXIT;
 	}
-
 	// Listen for any client sockets.
 	if (-1 == listen(server_sock, 10)) {
 		perror("listen on server");
@@ -166,9 +166,11 @@ int main(int argc, char *argv[])
 	 * individually or at once. With each successful accept, create a
 	 * thread for the new connection. 
 	 */
+	exit_status = 0;
 	while (num_connected < NUM_MAX_CLIENTS) {
 		if (SIGINT_FLAG) {
 			fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
+			exit_status = 1;
 			break;
 		}
 		uint32_t sockfd =
@@ -184,6 +186,12 @@ int main(int argc, char *argv[])
 			continue;
 		}
 		pkg_t *pkg = calloc(1, sizeof(*pkg));
+		if (!pkg) {
+			perror("server");
+			errno = 0;
+			exit_status = 1;
+			break;
+		}
 		pkg->client_accounts = client_accounts;
 		pkg->sockfd = sockfd;
 
@@ -218,5 +226,5 @@ int main(int argc, char *argv[])
  EXIT:
 	close(server_sock);
  ARG_EXIT:
-	return 1;
+	return exit_status;
 }
