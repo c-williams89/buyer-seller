@@ -3,6 +3,8 @@
 #include <stdlib.h>
 
 #include "client_helper.h"
+// gcc test/*.c client_src/client_helper.c server_src/server_helper.c -I./include -lcheck -lm -pthread -lrt -lsubunit
+
 
 START_TEST (test_validate_file_invalid) {
         char *invalid_files[] = {
@@ -48,4 +50,14 @@ Suite *test_client_helper(void) {
         }
         suite_add_tcase(s, tc_core);
         return s;
+}
+
+int main(void) {
+        SRunner *sr = srunner_create(NULL);
+        srunner_add_suite(sr, test_client_helper());
+#ifdef VALGRIND
+        srunner_set_fork_status(sr, CK_NOFORK);
+#endif
+        srunner_run_all(sr, CK_VERBOSE);
+        srunner_free(sr);
 }
