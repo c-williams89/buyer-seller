@@ -17,8 +17,7 @@ sig_atomic_t SIGINT_FLAG = 0;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 typedef struct pkg_t {
-	account_t *client_accounts;
-	// account_t client_accounts[NUM_ACCTS];	
+	account_t *client_accounts;	
 	ssize_t sockfd;
 } pkg_t;
 
@@ -64,7 +63,6 @@ int main(void)
 	struct sigaction sigint_action;
 	sigset_t sigint_set;
 	sigemptyset(&sigint_set);
-	// sigaddset(&sigint_set, )
 	sigint_action.sa_flags = 0;
 	sigint_action.sa_handler = handle_SIGINT;
 	sigint_action.sa_mask = sigint_set;
