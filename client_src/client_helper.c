@@ -36,7 +36,12 @@ int validate_file(FILE * fp)
 
 int client_create_socket()
 {
-
+	/**
+	 * Create the UNIX domain stream socket. Set up UNIX sockaddr structure
+	 * using AF_UNIX for family and defined filepath to bind to (shared.h).
+	 * 
+	 * Unlink file so the bind will succeed on the server side. 
+	 */
 	struct sockaddr_un client_sockaddr;
 	int client_sock = -1;
 
