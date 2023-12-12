@@ -9,12 +9,15 @@
 #include <unistd.h>
 #include <signal.h>
 #include <setjmp.h>
+#include <time.h>
+#include <stdbool.h>
 
 #include "client_helper.h"
 #include "shared.h"
 
 sig_atomic_t SIGINT_FLAG = 0;
 jmp_buf env;
+bool clock_time = false;
 
 static void handle_SIGINT(int signum)
 {
@@ -40,11 +43,19 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "client: Missing file argument\n");
 		goto EXIT;
 	}
-
-	if (argc > 2) {
+	if (argc > 3) {
 		fprintf(stderr, "client: Too many arguments\n");
 		goto EXIT;
 	}
+	if (3 == argc) {
+		if ((0 == strncmp(argv[2], "-p", 3))) {
+			clock_time = true;
+		} else {
+			fprintf(stderr, "client: invalid option -- '%s'\n", argv[2]);
+			goto EXIT;
+		}
+	}
+
 
 	FILE *fp = fopen(argv[1], "r");
 	if (!fp) {
@@ -84,6 +95,10 @@ int main(int argc, char *argv[])
 	size_t buff_len = 0;
 	uint8_t byte_array[5] = { 0 };
 	uint32_t packet_sent = 0;
+	clock_t t = 0;
+	int total_time = 0;
+	double trans_per_sec = 0.0;
+
 	while (-1 != getline(&buff, &buff_len, fp)) {
 		if (SIGINT_FLAG) {
 			fprintf(stderr, "SIGNAL INTERRUPT: shutting down.\n");
@@ -101,13 +116,13 @@ int main(int argc, char *argv[])
 		long new_val = strtol(arg, NULL, 10);
 		int32_t *num = (int32_t *)(byte_array + 1);
 		*num = (int32_t) new_val;
-		
-		// put trans/second logic here
-		// t = clock()
 
 		if (0 == new_val) {
 			continue;
-		} else if (new_val > 0) {
+		}
+		
+		t = clock();
+		if (new_val > 0) {
 			client_accounts[acct_num - 1].num_orders += 1;
 		} else {
 			client_accounts[acct_num - 1].num_payments += 1;
@@ -118,12 +133,13 @@ int main(int argc, char *argv[])
 			perror("client");
 			errno = 0;
 		}
-		// get time delta
-		// add timedelta to total time
+
+		t = clock() - t;
+		total_time += t;
 		packet_sent++;
 	}
-	//divide by 
-	
+
+	trans_per_sec = (double)packet_sent / ((double)total_time / CLOCKS_PER_SEC);
 	for (int i = 0; i < NUM_ACCTS; ++i) {
 		if (client_accounts[i].num_orders > 0) {
 			printf("%-20s %u %7d %5u %5u\n", argv[1],
@@ -132,6 +148,9 @@ int main(int argc, char *argv[])
 			       client_accounts[i].num_orders,
 			       client_accounts[i].num_payments);
 		}
+	}
+	if (clock_time) {
+		printf("Transmissions per second: %.2f", trans_per_sec);
 	}
 	puts("");
 	free(buff);

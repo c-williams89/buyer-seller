@@ -15,7 +15,7 @@
 
 sig_atomic_t SIGINT_FLAG = 0;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
+//'Droid Sans Mono', 'monospace', monospace
 typedef struct pkg_t {
 	account_t *client_accounts;	
 	ssize_t sockfd;
