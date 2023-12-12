@@ -26,9 +26,8 @@ static void handle_SIGINT(int signum)
 	SIGINT_FLAG = 1;
 }
 
-int main(int argc, char *argv[])
+static void regist_signal_handler(void)
 {
-	// Set up signal handler
 	struct sigaction sigint_action;
 	sigset_t sigint_set;
 	sigemptyset(&sigint_set);
@@ -36,7 +35,11 @@ int main(int argc, char *argv[])
 	sigint_action.sa_handler = handle_SIGINT;
 	sigint_action.sa_mask = sigint_set;
 	sigaction(SIGINT, &sigint_action, NULL);
+}
 
+int main(int argc, char *argv[])
+{
+	regist_signal_handler();
 	struct sockaddr_un server_sockaddr;
 
 	if (1 == argc) {
@@ -51,11 +54,11 @@ int main(int argc, char *argv[])
 		if ((0 == strncmp(argv[2], "-p", 3))) {
 			clock_time = true;
 		} else {
-			fprintf(stderr, "client: invalid option -- '%s'\n", argv[2]);
+			fprintf(stderr, "client: invalid option -- '%s'\n",
+				argv[2]);
 			goto EXIT;
 		}
 	}
-
 
 	FILE *fp = fopen(argv[1], "r");
 	if (!fp) {
@@ -114,13 +117,13 @@ int main(int argc, char *argv[])
 		byte_array[0] = acct_num;
 		arg = strtok(NULL, "\n");
 		long new_val = strtol(arg, NULL, 10);
-		int32_t *num = (int32_t *)(byte_array + 1);
+		int32_t *num = (int32_t *) (byte_array + 1);
 		*num = (int32_t) new_val;
 
 		if (0 == new_val) {
 			continue;
 		}
-		
+
 		t = clock();
 		if (new_val > 0) {
 			client_accounts[acct_num - 1].num_orders += 1;
@@ -139,7 +142,8 @@ int main(int argc, char *argv[])
 		packet_sent++;
 	}
 
-	trans_per_sec = (double)packet_sent / ((double)total_time / CLOCKS_PER_SEC);
+	trans_per_sec =
+	    (double)packet_sent / ((double)total_time / CLOCKS_PER_SEC);
 	for (int i = 0; i < NUM_ACCTS; ++i) {
 		if (client_accounts[i].num_orders > 0) {
 			printf("%-20s %u %7d %5u %5u\n", argv[1],
@@ -150,7 +154,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	if (clock_time) {
-		printf("Transmissions per second: %.2f", trans_per_sec);
+		printf("Transmissions per second: %.2f\n", trans_per_sec);
 	}
 	puts("");
 	free(buff);
